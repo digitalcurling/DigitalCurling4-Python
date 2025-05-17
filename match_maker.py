@@ -5,7 +5,7 @@ import asyncio
 from aiohttp import BasicAuth
 import logging
 
-from client1.load_secrets import username, password
+from load_secrets import username, password
 from dcclient.send_database import ClientDataModel
 
 URL = "http://localhost:10000/start-match"

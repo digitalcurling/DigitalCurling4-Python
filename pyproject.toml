@@ -3,10 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "kr-work"
+name = "dcclient"
 version = "0.1.0"
 description = 'Client template for the DC server'
-readme = "README.md",
+readme = "README.md"
 authors = [
     { name = "kr-work", email = "81555178+kr-work@users.noreply.github.com" }
 ]

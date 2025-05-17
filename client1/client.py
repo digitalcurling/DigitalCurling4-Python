@@ -3,8 +3,8 @@ import json
 import numpy as np
 from pathlib import Path
 
+from load_secrets import username, password
 from dcclient.dc_client import DCClient
-from client1.load_secrets import username, password
 from dcclient.send_database import TeamModel, MatchNameModel
 
 

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import numpy as np
+from pathlib import Path
 
 from load_secrets import username, password
 from dcclient.dc_client import DCClient
@@ -13,7 +14,8 @@ async def main():
     # team_name=MatchNameModel.team0
     # に変更してください
     # なお、先に
-    with open("match_id.json", "r") as f:
+    json_path = Path(__file__).parents[1] / "match_id.json"
+    with open(json_path, "r") as f:
         match_id = json.load(f)
     client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
     # client.logger.info(f"match_id: {match_id}")
