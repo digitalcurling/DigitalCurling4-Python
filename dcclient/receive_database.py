@@ -69,7 +69,7 @@ class TeamSchema(BaseModel):
 
 
 class ShotInfoSchema(BaseModel):
-    translation_velocity: float
+    translational_velocity: float
     angular_velocity: float
     shot_angle: float
 

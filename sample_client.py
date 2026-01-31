@@ -40,17 +40,17 @@ async def main():
 
         # AIによるショット情報を送信する際は、以下を変更してください
         if next_shot_team == match_team_name:
-            # translation_velocity: ストーンの投球時の初速度の大きさ
+            # translational_velocity: ストーンの投球時の初速度の大きさ
             # angular_velocity_sign: ストーンの投球時の角速度の符号(1 -> cw, -1 -> ccw)
             # angular_velocity: ストーンの投球時の角速度の大きさ(デフォルトはfcv1の値を採用しているため、何も指定が無ければnp.pi/2)
             # shot_angle: ストーンの投球時の角度(右手座標系において、x軸の正の方向が0°、y軸の正の方向が90°)
-            translation_velocity = 2.371
+            translational_velocity = 2.371
             angular_velocity_sign = 1
             angular_velocity = np.pi / 2
             shot_angle = 91.7
             # ショット情報を送信
             await client.send_shot_info(
-                translation_velocity=translation_velocity,
+                translational_velocity=translational_velocity,
                 angular_velocity_sign=angular_velocity_sign,
                 shot_angle=shot_angle,
                 angular_velocity=angular_velocity,

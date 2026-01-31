@@ -5,7 +5,7 @@
 - **match_id**: `UUID`  
   各試合固有のID
 
-- **translation_velocity**: `float`  
+- **translational_velocity**: `float`  
   並進速度
 
 - **angular_velocity_sign**: `str`  

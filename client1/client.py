@@ -52,11 +52,11 @@ async def main():
         client.logger.info(f"next_shot_team: {next_shot_team}")
 
         if next_shot_team == match_team_name:
-            translation_velocity = 2.3
+            translational_velocity = 2.3
             angular_velocity = np.pi / 2
             shot_angle = np.pi / 2
             await client.send_shot_info(
-                translation_velocity=translation_velocity,
+                translational_velocity=translational_velocity,
                 shot_angle=shot_angle,
                 angular_velocity=angular_velocity,
             )

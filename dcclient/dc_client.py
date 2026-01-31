@@ -121,7 +121,7 @@ class DCClient:
         vy: float,
         rotation: str
     ):
-        translation_velocity = np.sqrt(vx**2 + vy**2)
+        translational_velocity = np.sqrt(vx**2 + vy**2)
         shot_angle = np.arctan2(vy, vx)
         angular_velocity = np.pi / 2
         if rotation == "cw":
@@ -131,7 +131,7 @@ class DCClient:
         else:
             pass
         await self.send_shot_info(
-            translation_velocity=translation_velocity,
+            translational_velocity=translational_velocity,
             shot_angle=shot_angle,
             angular_velocity=angular_velocity,
         )
@@ -139,12 +139,12 @@ class DCClient:
 
     async def send_shot_info(
         self,
-        translation_velocity: float,
+        translational_velocity: float,
         shot_angle: float,
         angular_velocity=np.pi / 2,
     ):
         shot_info = ShotInfoModel(
-            translation_velocity=translation_velocity,
+            translational_velocity=translational_velocity,
             angular_velocity=angular_velocity,
             shot_angle=shot_angle,
         )

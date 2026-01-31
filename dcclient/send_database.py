@@ -25,7 +25,7 @@ class TournamentModel(BaseModel):
 
 
 class ShotInfoModel(BaseModel):
-    translation_velocity: float
+    translational_velocity: float
     angular_velocity: float | None
     shot_angle: float
 
