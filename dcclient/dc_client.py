@@ -11,19 +11,18 @@ import numpy as np
 from typing import AsyncGenerator
 from aiohttp_sse_client2 import client
 
-from dcclient.receive_database import (
+from dcclient.receive_data import (
     StateSchema,
 )
-from dcclient.send_database import (
+from dcclient.send_data import (
     MatchNameModel,
     ShotInfoModel,
     TeamModel,
+    PositionedStonesModel
 )
 
 # クライアント側でこのホスト名とポート番号を代入できる形に変更したい。ただし、クライアント作成者が気にしなくても自動で設定される形にしたい。
-TEAM_INFO_URL = "http://localhost:5000/store-team-config"
-SHOT_INFO_URL = "http://localhost:5000/shots"
-SSE_URL = "http://localhost:5000/matches"
+
 
 # ログファイルの保存先ディレクトリを指定
 par_dir = pathlib.Path(__file__).parents[1]
@@ -64,8 +63,12 @@ class DCClient:
         self.password: str = password
         self.state_data: StateSchema = None
         self.winner_team: MatchNameModel = None
-        # 通信が切断された時刻（再接続までの時間計測用）
-        self.disconnected_at = None
+
+    def set_server_address(self, host: str, port: int) -> None:
+        self.team_info_url = f"http://{host}:{port}/store-team-config"
+        self.shot_info_url = f"http://{host}:{port}/shots"
+        self.sse_url = f"http://{host}:{port}/matches"
+        self.positioned_stones_url = f"http://{host}:{port}/matches"
 
     async def send_team_info(
         self, team_info: TeamModel
@@ -79,8 +82,8 @@ class DCClient:
                 match_team_name (MatchNameModel): The name of the team in the match.
                 player1 (PlayerModel): Player 1 information.
                 player2 (PlayerModel): Player 2 information.
-                player3 (PlayerModel): Player 3 information.
-                player4 (PlayerModel): Player 4 information.
+                player3 (PlayerModel | None): Player 3 information (optional; may be None for Mix Doubles).
+                player4 (PlayerModel | None): Player 4 information (optional; may be None for Mix Doubles).
         """
 
         async with aiohttp.ClientSession(
@@ -88,7 +91,7 @@ class DCClient:
         ) as session:
             try:
                 async with session.post(
-                    url=TEAM_INFO_URL,
+                    url=self.team_info_url,
                     params={
                         "match_id": self.match_id,
                         "expected_match_team_name": self.match_team_name.value,
@@ -101,6 +104,10 @@ class DCClient:
                             self.logger.info("Team information successfully sent.")
                             self.match_team_name = await response.json()
                             print(f"team_name: {self.match_team_name}")
+
+                        elif response.status == 400:
+                            self.logger.error(f"response: {response}")
+                            self.logger.error("Bad Request: Please check the team information settings.")
 
                         # Unauthorized access
                         elif response.status == 401:
@@ -154,7 +161,7 @@ class DCClient:
         ) as session:
             try:
                 async with session.post(
-                    url=SHOT_INFO_URL,
+                    url=self.shot_info_url,
                     params={"match_id": self.match_id},
                     json=shot_info.model_dump(),
                 ) as response:
@@ -175,20 +182,56 @@ class DCClient:
             except Exception as e:
                 self.logger.error(f"An error occurred: {e}")
 
+    # This method is for mix doubles positioned stones info
+    async def send_positioned_stones_info(
+        self,
+        positioned_stones: PositionedStonesModel,
+    ):
+        # Send positioned stones information to the server.
+        # positioned_stones: PositionedStonesModel
+        url = f"{self.positioned_stones_url}/{self.match_id}/end-setup"
+        positioned_stones_value: PositionedStonesModel = positioned_stones
+
+        async with aiohttp.ClientSession(
+            auth=BasicAuth(login=self.username, password=self.password)
+        ) as session:
+            try:
+                async with session.post(
+                    url=url,
+                    params={"match_id": self.match_id},
+                    json={"positioned_stones": positioned_stones_value}
+                ) as response:
+                    # Successful response
+                    if response.status == 200:
+                        self.logger.debug("Positioned stones information successfully sent.")
+                    # Bad Request
+                    elif response.status == 400:
+                        self.logger.error(f"response: {response}")
+                        self.logger.error("Bad Request: Please check the power play settings.")
+                    # Unauthorized access
+                    elif response.status == 401:
+                        self.logger.error(f"response: {response}")
+                        self.logger.error(
+                            "Unauthorized access. Please check your credentials."
+                        )
+                    # Conflict error
+                    elif response.status == 409:
+                        self.logger.error(f"response: {response}")
+                    # Other errors
+                    else:
+                        self.logger.error(f"response: {response}")
+                        self.logger.error("Failed to send positioned stones information.")
+            except aiohttp.client_exceptions.ServerDisconnectedError:
+                self.logger.error("Server is not running. Please contact the administrator.")
+            except Exception as e:
+                self.logger.error(f"An error occurred: {e}")
 
     async def receive_state_data(self) -> AsyncGenerator[StateSchema, None]:
-        url = f"{SSE_URL}/{self.match_id}/stream"
+        url = f"{self.sse_url}/{self.match_id}/stream"
         self.logger.info(f"Connecting to SSE URL: {url}")  # URLをログに出力
+
         while True:
             try:
-                # 直前に切断されていた場合は、再接続までの時間を計測
-                if self.disconnected_at is not None:
-                    downtime = datetime.now() - self.disconnected_at
-                    self.logger.info(
-                        f"Reconnected after {downtime.total_seconds():.4f} seconds of disconnection."
-                    )
-                    self.disconnected_at = None
-
                 async with client.EventSource(
                     url=url, auth=BasicAuth(login=self.username, password=self.password), reconnection_time=5, max_connect_retry=5
                 ) as sse_client:
@@ -208,18 +251,12 @@ class DCClient:
                             
             except aiohttp.client_exceptions.ServerDisconnectedError:
                 self.logger.error("Server is not running. Please contact the administrator.")
-                # 切断時刻を記録
-                self.disconnected_at = datetime.now()
                 break
             except TimeoutError:
                 self.logger.error("Timeout error occurred while receiving state data.")
-                # タイムアウト発生時刻を記録（次のループで再接続までの経過時間を計測）
-                self.disconnected_at = datetime.now()
                 await asyncio.sleep(1)
             except Exception as e:
                 self.logger.error(f"An error occurred: {e}")
-                # その他のエラーでも切断扱いとして計測を開始
-                self.disconnected_at = datetime.now()
                 await asyncio.sleep(5)
 
     def get_end_number(self):

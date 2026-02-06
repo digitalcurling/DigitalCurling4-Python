@@ -6,7 +6,7 @@ from aiohttp import BasicAuth
 import logging
 
 from load_secrets import username, password
-from dcclient.send_database import ClientDataModel
+from dcclient.send_data import ClientDataModel
 
 URL = "http://localhost:5000/matches"
 logger = logging.getLogger("Match_Maker")
@@ -46,6 +46,8 @@ class MatchMaker:
                             logger.info(f"match_id: {match_id}")
                             with open("match_id.json", "w") as f:
                                 json.dump(match_id, f)
+                        elif response.status == 400:
+                            logger.error(f"Bad Request: {response}")
                         elif response.status == 401:
                             logger.error(f"Failed: {response}")
                         elif response.status == 422:
@@ -55,7 +57,8 @@ class MatchMaker:
 
 
 if __name__ == "__main__":
-    with open("setting.json", "r") as f:
+    with open("md_setting.json", "r") as f:
+    # with open("setting.json", "r") as f:
         data = json.load(f)
     data = ClientDataModel(**data)
     match_maker = MatchMaker()

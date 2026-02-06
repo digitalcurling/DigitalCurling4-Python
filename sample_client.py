@@ -4,7 +4,7 @@ import numpy as np
 
 from dcclient.dc_client import DCClient
 from load_secrets import username, password
-from dcclient.send_database import TeamModel, MatchNameModel
+from dcclient.send_data import TeamModel, MatchNameModel
 
 
 async def main():
@@ -40,18 +40,12 @@ async def main():
 
         # AIによるショット情報を送信する際は、以下を変更してください
         if next_shot_team == match_team_name:
-            # translational_velocity: ストーンの投球時の初速度の大きさ
-            # angular_velocity_sign: ストーンの投球時の角速度の符号(1 -> cw, -1 -> ccw)
-            # angular_velocity: ストーンの投球時の角速度の大きさ(デフォルトはfcv1の値を採用しているため、何も指定が無ければnp.pi/2)
-            # shot_angle: ストーンの投球時の角度(右手座標系において、x軸の正の方向が0°、y軸の正の方向が90°)
-            translational_velocity = 2.371
-            angular_velocity_sign = 1
+            await asyncio.sleep(2)  # 思考時間
+            translational_velocity = 2.3
             angular_velocity = np.pi / 2
-            shot_angle = 91.7
-            # ショット情報を送信
+            shot_angle = np.pi / 180
             await client.send_shot_info(
                 translational_velocity=translational_velocity,
-                angular_velocity_sign=angular_velocity_sign,
                 shot_angle=shot_angle,
                 angular_velocity=angular_velocity,
             )

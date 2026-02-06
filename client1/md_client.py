@@ -7,7 +7,7 @@ from pathlib import Path
 
 from load_secrets import username, password
 from dcclient.dc_client import DCClient
-from dcclient.send_data import TeamModel, MatchNameModel
+from dcclient.send_data import TeamModel, MatchNameModel, PositionedStonesModel
 
 # ログファイルの保存先ディレクトリを指定
 par_dir = Path(__file__).parents[1]
@@ -31,7 +31,7 @@ async def main():
         match_id = json.load(f)
     client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
     # client.logger.info(f"match_id: {match_id}")
-    with open("team1_config.json", "r") as f:
+    with open("md_team1_config.json", "r") as f:
         data = json.load(f)
     client_data = TeamModel(**data)
     file_handler = logging.FileHandler(log_file_path, encoding="utf-8", mode="w")
@@ -47,12 +47,26 @@ async def main():
         if (winner_team := client.get_winner_team()) is not None:
             client.logger.info(f"Winner: {winner_team}")
             break
+        
+        client.logger.info(f"state_data: {state_data}")
 
         next_shot_team = client.get_next_team()
         client.logger.info(f"next_shot_team: {next_shot_team}")
 
+        if state_data.next_shot_team is None and state_data.mix_doubles_settings is not None:
+            if state_data.mix_doubles_settings.end_setup_team == match_team_name:
+                client.logger.info("You select the positioned stones.")
+                # You can choose one of the following patterns:
+                # PositionedStonesModel.center_guard -> Next End: Playing First
+                # PositionedStonesModel.center_house -> Next End: Playing Second
+                # PositionedStonesModel.pp_left      -> Next End: Positioned Stones on the Left and Playing Second
+                # PositionedStonesModel.pp_right     -> Next End: Positioned Stones on the Right and Playing Second
+                positioned_stones = PositionedStonesModel.center_house
+                await client.send_positioned_stones_info(positioned_stones)
+
         if next_shot_team == match_team_name:
-            translational_velocity = 2.0
+            await asyncio.sleep(2)  # 思考時間
+            translational_velocity = 2.3
             angular_velocity = np.pi / 2
             shot_angle = np.pi / 2
             await client.send_shot_info(

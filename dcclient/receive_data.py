@@ -55,35 +55,33 @@ class ScoreSchema(BaseModel):
         from_attributes = True
 
 
-class TeamSchema(BaseModel):
-    team_id: UUID
-    team_name: str
-    player1: UUID
-    player2: UUID
-    player3: UUID
-    player4: UUID
-    player1_data: Optional[PlayerSchema] = None
-    player2_data: Optional[PlayerSchema] = None
-    player3_data: Optional[PlayerSchema] = None
-    player4_data: Optional[PlayerSchema] = None
-
-
 class ShotInfoSchema(BaseModel):
     translational_velocity: float
     angular_velocity: float
     shot_angle: float
 
 
+class PowerPlayEndSchema(BaseModel):
+    team0: int | None = None
+    team1: int | None = None
+
+
+class MixDoublesSettingsSchema(BaseModel):
+    end_setup_team: str
+    positioned_stones_pattern: int
+    power_play_end: PowerPlayEndSchema
+
 class StateSchema(BaseModel):
     winner_team: str | None
     end_number: int
-    shot_number: int
-    total_shot_number: int
+    shot_number: int | None
+    total_shot_number: int | None
     next_shot_team: str | None
     first_team_remaining_time: float
     second_team_remaining_time: float
     first_team_extra_end_remaining_time: float
     second_team_extra_end_remaining_time: float
+    mix_doubles_settings: Optional[MixDoublesSettingsSchema] = None
     last_move: ShotInfoSchema | None
     stone_coordinate: Optional[StoneCoordinateSchema] = None
     score: Optional[ScoreSchema] = None

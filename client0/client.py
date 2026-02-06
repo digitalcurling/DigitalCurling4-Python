@@ -7,7 +7,7 @@ from pathlib import Path
 
 from load_secrets import username, password
 from dcclient.dc_client import DCClient
-from dcclient.send_database import TeamModel, MatchNameModel
+from dcclient.send_data import TeamModel, MatchNameModel
 
 # ログファイルの保存先ディレクトリを指定
 par_dir = Path(__file__).parents[1]
@@ -55,9 +55,9 @@ async def main():
 
         if next_shot_team == match_team_name:
             await asyncio.sleep(2)  # 思考時間
-            translational_velocity = 2.3
+            translational_velocity = 2.33
             angular_velocity = np.pi / 2
-            shot_angle = np.pi / 2
+            shot_angle = 91.7 * np.pi / 180
             await client.send_shot_info(
                 translational_velocity=translational_velocity,
                 shot_angle=shot_angle,

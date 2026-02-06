@@ -1,15 +1,15 @@
 {
-    "game_mode": "standard",
+    "game_mode": "mix_doubles",
     "tournament": {
         "tournament_name": "Learning"
     },
     "simulator": {
         "simulator_name": "fcv1"
     },
-    "applied_rule": "no_tick_rule",
+    "applied_rule": "modified_fgz",
     "time_limit": 219,
     "extra_end_time_limit": 21.9,
-    "standard_end_count": 10,
+    "standard_end_count": 8,
     "match_name": "training",
-    "positioned_stones_pattern": null
+    "positioned_stones_pattern": 1
 }
