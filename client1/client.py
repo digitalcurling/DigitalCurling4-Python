@@ -30,6 +30,7 @@ async def main():
     with open(json_path, "r") as f:
         match_id = json.load(f)
     client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
+    client.set_server_address(host="localhost", port=5000)
     # client.logger.info(f"match_id: {match_id}")
     with open("team1_config.json", "r") as f:
         data = json.load(f)
