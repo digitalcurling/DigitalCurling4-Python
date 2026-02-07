@@ -218,7 +218,6 @@ class DCClient:
             positioned_stones: PositionedStonesModel
         """
         url = f"{self.positioned_stones_url}/{self.match_id}/end-setup"
-        positioned_stones_value: PositionedStonesModel = positioned_stones
 
         async with aiohttp.ClientSession(
             auth=BasicAuth(login=self.username, password=self.password)
@@ -226,8 +225,8 @@ class DCClient:
             try:
                 async with session.post(
                     url=url,
-                    params={"match_id": self.match_id},
-                    json={"positioned_stones": positioned_stones_value}
+                    params={"match_id": self.match_id,
+                    "request": positioned_stones.value},
                 ) as response:
                     # Successful response
                     if response.status == 200:

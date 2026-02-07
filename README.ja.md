@@ -41,6 +41,8 @@ game_mode には **standard** または **mixed_doubles** を入れてくださ�
 ミックスダブルスに対応した対戦が開始されます。この場合は**applied_rule**には
     - modified_fgz
     を選択してください
+なお、ミックスダブルスの際には、**positioned_stones_pattern**に0~5の数値を入れてください。こちらは、各エンドにおける置き石のストーン配置を決定するものです。
+![](./figure/positioned_stone.png)
 
 (現在、利用可能なシミュレータは "fcv1" のみですので、他のシミュレータでは対戦できません。)
 
@@ -81,3 +83,86 @@ cd client1
 python client.py
 ```
 これらのコマンドで接続を確認できると思います。
+
+## 試合の流れ
+### 4人制カーリング
+1. クライアントをインスタンス化
+```Python
+client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
+```
+match_id は試合作成時にサーバから受け取ります。
+usernameとpasswordはクライアントを特定するために、設定する必要があります。
+本番環境では、参加者にusernameとpasswordを設定して参加して頂く必要がありますが、今は[.env](/.env)にて予め設定済みのものがあるので、そちらをご利用ください。
+
+
+まず初めにチーム情報をサーバへ送信します。
+チーム情報の例として[team_config.json](./team_config.json)をご確認ください。
+
+2. 通信先のホスト名・ポート番号の設定
+**DCClient**内にある**set_server_address**関数を利用して、サーバのホスト名・ポート番号を設定してください。
+```Python
+client.set_server_address(host="localhost", port=5000)
+```
+
+3. チーム情報の送信
+**send_team_info**関数を用いてチーム情報を、サーバへ送信します。
+この際に、最初のエンドにおける先攻後攻をサーバから受け取ります。
+(先攻 -> team0, 後攻 -> team1)
+
+4. 試合開始
+サーバから盤面データを受け取り、次のショットチームがあなたのチーム名(team0 または team1)と一致した場合、**send_shot_info**関数を利用して投球情報をサーバへ送信してください。
+
+なお、第三世代のデジタルカーリングの投球情報のままでも送信できるよう**send_shot_info_dc3**関数を用意してあります。
+引数は
+- vx
+- vy
+- rotation("cw" または"ccw"を入れてください)
+
+5. 試合終了
+盤面データ内にある**winner_team**にteam0 または team1 が入ったら試合終了です。
+
+### ミックスダブルス
+1. クライアントをインスタンス化
+```Python
+client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
+```
+match_id は試合作成時にサーバから受け取ります。
+usernameとpasswordはクライアントを特定するために、設定する必要があります。
+本番環境では、参加者にusernameとpasswordを設定して参加して頂く必要がありますが、今は[.env](/.env)にて予め設定済みのものがあるので、そちらをご利用ください。
+
+
+まず初めにチーム情報をサーバへ送信します。
+チーム情報の例として[md_team_config.json](./md_team_config.json)をご確認ください。ここのチームデータだけ4人制カーリングと異なります。
+
+2. 通信先のホスト名・ポート番号の設定 (4人制カーリングと同様)
+**DCClient**内にある**set_server_address**関数を利用して、サーバのホスト名・ポート番号を設定してください。
+```Python
+client.set_server_address(host="localhost", port=5000)
+```
+3. チーム情報の送信 (4人制カーリングと同様)
+**send_team_info**関数を用いてチーム情報を、サーバへ送信します。
+この際に、最初のエンドにおける先攻後攻をサーバから受け取ります。
+(先攻 -> team0, 後攻 -> team1)
+
+4. 試合開始
+試合開始のタイミングで、サーバから**next_shot_team**にNoneが入った状態の盤面データが送られます。各エンドの最初は置き石を設定して頂きます。
+この際に、
+    ```Python
+    class PositionedStonesModel(str, enum.Enum):
+        center_guard = "center_guard"
+        center_house = "center_house"
+        pp_left = "pp_left"
+        pp_right = "pp_right"
+    ```
+    を使用して、置き石の置く場所・パワープレイの選択をします。(パワープレイは1試合1チームにつき1回までです。2回目以降は自動で以下のcenter_guardが選択されます)
+    - PositionedStoneModel.center_guard -> 置き石をガードに設置し、先攻を取る
+    - PositionedStoneModel.center_house -> 置き石をハウス内に設置し、後攻を取る
+    - PositionedStoneModel.pp_left -> パワープレイ。置き石をハウス左側に設置し、後攻を取る
+    - PositionedStoneModel.pp_right -> パワープレイ。置き石をガード右側に設置し、後攻を取る
+
+その後はサーバから盤面データを受け取り、次のショットチームがあなたのチーム名(team0 または team1)と一致した場合、**send_shot_info**関数を利用して投球情報をサーバへ送信してください。
+
+なお、第三世代のデジタルカーリングの投球情報のままでも送信できるよう**send_shot_info_dc3**関数を用意してあります。
+
+5. 試合終了 (4人制カーリングと同様)
+盤面データ内にある**winner_team**にteam0 または team1 が入ったら試合終了です。
