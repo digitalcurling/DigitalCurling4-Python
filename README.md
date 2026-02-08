@@ -31,6 +31,7 @@ Note that the user name and password already registered are in the .env of this 
 
 
 ## Make Match
+
 ### Match Setting File
 In the "src.setting.json" file, describe the information required for the match, such as standard_end_count, time_limits, the simulator to be used, and the applied_rule.
 
@@ -87,8 +88,8 @@ python client.py
 I think you can check the connection with these command.
 
 ## Match flow
-
 ### Four-player curling
+The protocol for four-player curling is ![here](./figure/protocol.png).
 
 1. Instantiate the client  
 ```Python
@@ -123,6 +124,7 @@ Arguments:
 When **winner_team** in the state data becomes team0 or team1, the match is finished.
 
 ### Mixed Doubles
+The protocol for miced doubles is as follows ![here](./figure/md_protocol.png).
 
 1. Instantiate the client
 ```Python

@@ -46,7 +46,7 @@ game_mode には **standard** または **mixed_doubles** を入れてくださ�
 
 (現在、利用可能なシミュレータは "fcv1" のみですので、他のシミュレータでは対戦できません。)
 
-### 試合作成
+## 試合作成
 setting.json の設定が完了したら、以下のコマンドを入力してください。
 
 ```Bash
@@ -57,7 +57,7 @@ python match_maker.py
 
 これで match_id.json に match_id が保存されます。
 
-## クライアントをサーバーに接続
+### クライアントをサーバーに接続
 実際に相互に対戦できるように、client0 と client1 というフォルダを用意しました。（配布する際は、client0 と client1 フォルダを削除した上で、別リポジトリにテンプレートとして作成するsample_client.py を参照してください。）
 
 その試合でプレイするプレイヤーの設定は、"client0.team0_config.json" および "client1.team1_config.json" で行えます。 また、大会と同じ設定でプレイする場合は、以下のように設定してください。
@@ -86,6 +86,8 @@ python client.py
 
 ## 試合の流れ
 ### 4人制カーリング
+4人制のカーリングの場合のプロトコルは![こちら](./figure/protocol.png)
+
 1. クライアントをインスタンス化
 ```Python
 client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
@@ -122,6 +124,8 @@ client.set_server_address(host="localhost", port=5000)
 盤面データ内にある**winner_team**にteam0 または team1 が入ったら試合終了です。
 
 ### ミックスダブルス
+ミックスダブルスの場合のプロトコルは![こちら](./figure/md_protocol.png)
+
 1. クライアントをインスタンス化
 ```Python
 client = DCClient(match_id=match_id, username=username, password=password, match_team_name=MatchNameModel.team0)
@@ -160,9 +164,9 @@ client.set_server_address(host="localhost", port=5000)
     - PositionedStoneModel.pp_left -> パワープレイ。置き石をハウス左側に設置し、後攻を取る
     - PositionedStoneModel.pp_right -> パワープレイ。置き石をガード右側に設置し、後攻を取る
 
-その後はサーバから盤面データを受け取り、次のショットチームがあなたのチーム名(team0 または team1)と一致した場合、**send_shot_info**関数を利用して投球情報をサーバへ送信してください。
+    その後はサーバから盤面データを受け取り、次のショットチームがあなたのチーム名(team0 または team1)と一致した場合、**send_shot_info**関数を利用して投球情報をサーバへ送信してください。
 
-なお、第三世代のデジタルカーリングの投球情報のままでも送信できるよう**send_shot_info_dc3**関数を用意してあります。
+    なお、第三世代のデジタルカーリングの投球情報のままでも送信できるよう**send_shot_info_dc3**関数を用意してあります。
 
 5. 試合終了 (4人制カーリングと同様)
 盤面データ内にある**winner_team**にteam0 または team1 が入ったら試合終了です。
