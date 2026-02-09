@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dc4client"
-version = "1.0.1"
+version = "1.0.0"
 description = 'Client template for the DC server'
 readme = "README.md"
 authors = [
