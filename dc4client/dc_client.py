@@ -12,10 +12,10 @@ from typing import AsyncGenerator
 from aiohttp_sse_client2 import client
 from typing import Any
 
-from dcclient.receive_data import (
+from dc4client.receive_data import (
     StateSchema,
 )
-from dcclient.send_data import (
+from dc4client.send_data import (
     MatchNameModel,
     ShotInfoModel,
     TeamModel,
@@ -35,6 +35,14 @@ log_file_path = log_dir / log_file_name
 
 
 class DCClient:
+    """Initialize the DCClient.
+        Args:
+            match_id (UUID): To identify the match.
+            username (str): Username for authentication.
+            password (str): Password for authentication.
+            log_level (int): Logging level.
+            match_team_name (MatchNameModel): The name of the team in the match.
+    """
     def __init__(
         self,
         match_id: UUID,
@@ -43,14 +51,6 @@ class DCClient:
         log_level: int = logging.INFO,
         match_team_name: MatchNameModel = MatchNameModel.team1,
     ):
-        """Initialize the DCClient.
-            Args:
-                match_id (UUID): To identify the match.
-                username (str): Username for authentication.
-                password (str): Password for authentication.
-                log_level (int): Logging level.
-                match_team_name (MatchNameModel): The name of the team in the match.
-        """
         self.logger = logging.getLogger("DC_Client")
         self.logger.propagate = False
         self.logger.setLevel(log_level)

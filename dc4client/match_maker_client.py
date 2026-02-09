@@ -6,6 +6,13 @@ from dcclient.send_data import ClientDataModel
 
 
 class MatchMakerClient:
+    """ Initialize the MatchMakerClient.
+        Args:
+            host (str): Server host address.
+            port (int): Server port number.
+            username (str): Username for authentication.
+            password (str): Password for authentication.
+    """    
     def __init__(self, host: str, port: int, username: str, password: str):
         self._base_url = f"http://{host}:{port}"
         self._auth = BasicAuth(login=username, password=password)
