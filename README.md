@@ -69,7 +69,7 @@ You can configure the players who will play in that match in “client0.team0_co
 If you want to create a unique team,
 
 ```md
-"use_default_config": flase
+"use_default_config": false
 ``` 
 
 After the above settings are in place, connect the client to the server by entering the following command
