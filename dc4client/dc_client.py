@@ -225,6 +225,7 @@ class DCClient:
         positioned_stones: PositionedStonesModel,
     ):
         """
+            This method is to support mix doubles positioned stones info.
             Send positioned stones information to the server.
             positioned_stones: PositionedStonesModel
         """
