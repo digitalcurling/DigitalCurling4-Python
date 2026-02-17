@@ -12,6 +12,6 @@ pip install dc4client
 ```
 
 ## How to use
-Detailed documentation is available [here](https://digitalcurling.github.io/DC4-Python/).
+Detailed documentation is available [here](https://digitalcurling.github.io/DigitalCurling4-Python/).
 
 Client template is [here](https://github.com/digitalcurling/DigitalCurling4-ClientTemplate).
