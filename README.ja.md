@@ -13,4 +13,4 @@ pip install dc4client
 ## 使い方
 詳しいドキュメントについては[こちら](https://digitalcurling.github.io/DigitalCurling4-Python/)になります。
 
-クライアントテンプレートは[こちら](https://github.com/digitalcurling/DigitalCurling4-ClientTemplate)になります。
+クライアントテンプレートは[こちら](https://github.com/digitalcurling/DigitalCurling4-Client-Python)になります。
