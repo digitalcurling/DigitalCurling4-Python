@@ -15,6 +15,8 @@ import random  # Moved to top level
 
 from dc4client.receive_data import (
     StateSchema,
+    ScoreSchema,
+    ShotInfoSchema,
 )
 from dc4client.send_data import (
     MatchNameModel,
@@ -494,33 +496,33 @@ class DCClient:
                 await asyncio.sleep(sleep_time)
                 backoff = min(max_backoff, backoff * 2)
 
-    def get_end_number(self):
+    def get_end_number(self) -> int:
         """Get the current end number from the state data."""
         return self.state_data.end_number
 
-    def get_shot_number(self):
+    def get_shot_number(self) -> int | None:
         """Get the current shot number from the state data."""
         return self.state_data.total_shot_number
 
-    def get_score(self):
+    def get_score(self) ->  tuple[list, list] | None:
         """Get the current score from the state data."""
         score = self.state_data.score
-        return score.first_team_score, score.second_team_score
+        return score.team0, score.team1
 
-    def get_next_team(self):
+    def get_next_team(self) -> str | None:
         """Get the next team to shot from the state data."""
         return self.state_data.next_shot_team
 
-    def get_last_move(self):
+    def get_last_move(self) -> ShotInfoSchema | None:
         """Get the last move information from the state data."""
         return self.state_data.last_move
 
-    def get_winner_team(self):
+    def get_winner_team(self) -> str | None:
         """Get the winner team from the state data."""
         winner_team = self.state_data.winner_team
         return winner_team
 
-    def get_stone_coordinates(self):
+    def get_stone_coordinates(self) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
         """Get the stone coordinates for both teams from the state data.
         Returns:
             Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]: 
