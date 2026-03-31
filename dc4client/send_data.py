@@ -33,7 +33,7 @@ class ShotInfoModel(BaseModel):
 
 class StateModel(BaseModel):
     end_number: int
-    shot_number: int
+    team_shot_number: int
     total_shot_number: int
 
 
@@ -66,10 +66,10 @@ class TeamModel(BaseModel):
 
 class GameMode(str, Enum):
     standard = "standard"
-    mix_doubles = "mix_doubles"
+    mixed_doubles = "mixed_doubles"
 
 
-class MixDoublesTeamModel(BaseModel):
+class MixedDoublesTeamModel(BaseModel):
     """Team configuration for Mix Doubles.
 
     Note:
@@ -108,15 +108,15 @@ class ClientDataModel(BaseModel):
 
     @model_validator(mode="after")
     def _validate_game_mode_and_pattern(self):
-        if self.game_mode == GameMode.mix_doubles:
+        if self.game_mode == GameMode.mixed_doubles:
             if self.positioned_stones_pattern is None:
                 raise ValueError(
-                    "positioned_stones_pattern is required when game_mode is mix_doubles"
+                    "positioned_stones_pattern is required when game_mode is mixed_doubles"
                 )
         else:
             if self.positioned_stones_pattern is not None:
                 raise ValueError(
-                    "positioned_stones_pattern must be null when game_mode is not mix_doubles"
+                    "positioned_stones_pattern must be null when game_mode is not mixed_doubles"
                 )
         return self
 

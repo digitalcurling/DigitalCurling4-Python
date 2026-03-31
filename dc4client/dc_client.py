@@ -3,6 +3,7 @@ from aiohttp import BasicAuth
 import asyncio
 import json
 import logging
+import re
 from uuid import UUID
 import aiohttp.client_exceptions
 import numpy as np
@@ -15,7 +16,6 @@ import random  # Moved to top level
 
 from dc4client.receive_data import (
     StateSchema,
-    ScoreSchema,
     ShotInfoSchema,
 )
 from dc4client.send_data import (
@@ -75,6 +75,15 @@ class JsonLineFormatter(logging.Formatter):
             log_entry["exception"] = self.formatException(record.exc_info)
 
         return json.dumps(log_entry, ensure_ascii=False)
+
+
+class AuthenticationError(Exception):
+    """Raised when authentication fails and the client should stop immediately."""
+
+    def __init__(self, message: str, status: Optional[int] = None, detail: Optional[str] = None):
+        super().__init__(message)
+        self.status = status
+        self.detail = detail
 
 
 class DCClient:
@@ -184,6 +193,57 @@ class DCClient:
             return await response.json()
         except Exception:
             return await response.text()
+
+    def _extract_error_detail(self, error: aiohttp.ClientResponseError) -> Optional[str]:
+        """Extract API error detail text from aiohttp response error message."""
+        candidates = [getattr(error, "message", None), str(error)]
+
+        for text in candidates:
+            if not text:
+                continue
+
+            json_candidate = None
+            bytes_match = re.search(r"b'(\{.*\})'", text)
+            if bytes_match:
+                json_candidate = bytes_match.group(1)
+            else:
+                json_match = re.search(r"(\{.*\})", text)
+                if json_match:
+                    json_candidate = json_match.group(1)
+
+            if not json_candidate:
+                continue
+
+            try:
+                payload = json.loads(json_candidate)
+                detail = payload.get("detail") if isinstance(payload, dict) else None
+                if isinstance(detail, str):
+                    return detail
+            except Exception:
+                continue
+
+        return None
+
+    def _is_authentication_failure(self, status: Optional[int], headers: Any, detail: Optional[str]) -> bool:
+        """Judge authentication failures with ordered conditions.
+
+        1) status == 401 and WWW-Authenticate contains Basic
+        2) detail == Invalid credentials
+        """
+        www_authenticate = ""
+        if headers is not None:
+            try:
+                www_authenticate = headers.get("WWW-Authenticate", "")
+            except Exception:
+                www_authenticate = ""
+
+        if status == 401 and "basic" in str(www_authenticate).lower():
+            return True
+
+        if detail == "Invalid credentials":
+            return True
+
+        return False
 
     async def send_team_info(
         self, team_info: TeamModel
@@ -308,13 +368,13 @@ class DCClient:
             except Exception as e:
                 self.logger.error(f"An error occurred: {e}")
 
-    # This method is for mix doubles positioned stones info
+    # This method is for mixed doubles positioned stones info
     async def send_positioned_stones_info(
         self,
         positioned_stones: PositionedStonesModel,
     ) -> None:
         """
-            This method is to support mix doubles positioned stones info.
+            This method is to support mixed doubles positioned stones info.
             Send positioned stones information to the server.
             Args:
                 positioned_stones (PositionedStonesModel): Positioned stones information model.
@@ -390,8 +450,6 @@ class DCClient:
 
         backoff = 1.0
         max_backoff = 60.0
-        consecutive_auth_errors = 0
-        AUTH_ERROR_THRESHOLD = 5
 
         while True:
             self.logger.info(f"Attempting SSE connect (next retry in approx {backoff:.1f}s if fail)")
@@ -423,7 +481,6 @@ class DCClient:
                         async for event in sse_client:
                             if not has_received_valid_data:
                                 backoff = 1.0
-                                consecutive_auth_errors = 0
                                 has_received_valid_data = True
                                 self.logger.debug("First packet received. Backoff reset.")
 
@@ -459,16 +516,51 @@ class DCClient:
 
             except aiohttp.ClientResponseError as e:
                 status = getattr(e, "status", None)
-                self.logger.warning(f"ClientResponseError: status={status}; {e}")
-                
-                if status in (401, 403):
-                    consecutive_auth_errors += 1
-                    self.logger.warning(f"Auth error count: {consecutive_auth_errors}")
-                    if consecutive_auth_errors >= AUTH_ERROR_THRESHOLD:
-                        backoff = min(max_backoff, backoff * 4)
-                        self.logger.error("Too many auth errors. Check credentials.")
+                headers = getattr(e, "headers", None)
+                detail = self._extract_error_detail(e)
+
+                if self._is_authentication_failure(status, headers, detail):
+                    self.logger.error(
+                        "Authentication failed in SSE stream. "
+                        f"status={status}, detail={detail}, "
+                        "action=stop_without_reconnect"
+                    )
+                    self.save_log_file()
+                    return
+
+                if status == 403:
+                    self.logger.warning(
+                        "SSE request returned 403 (authorization/policy). "
+                        "Will apply reconnect policy."
+                    )
+                else:
+                    self.logger.warning(f"ClientResponseError: status={status}; {e}")
                 
                 sleep_time = backoff + random.uniform(0, 0.5 * backoff)
+                await asyncio.sleep(sleep_time)
+                backoff = min(max_backoff, backoff * 2)
+
+            except ConnectionRefusedError as e:
+                error_text = str(e)
+                raw_status = getattr(e, "status", None)
+                status = raw_status if isinstance(raw_status, int) else (401 if "failed: 401" in error_text else None)
+                detail = "Invalid credentials" if "Invalid credentials" in error_text else self._extract_error_detail(e)
+
+                if status == 401 and detail == "Invalid credentials":
+                    self.logger.error(
+                        "Authentication failed in SSE stream (connection refused). "
+                        f"status={status}, detail={detail}, "
+                        "action=stop_without_reconnect"
+                    )
+                    self.save_log_file()
+                    return
+
+                sleep_time = backoff + random.uniform(0, 0.5 * backoff)
+                self.logger.warning(
+                    "Connection refused while opening SSE stream: "
+                    f"status={status}, detail={detail}, error={e!r}. "
+                    f"Reconnecting in {sleep_time:.2f}s"
+                )
                 await asyncio.sleep(sleep_time)
                 backoff = min(max_backoff, backoff * 2)
 
