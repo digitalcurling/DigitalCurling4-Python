@@ -29,7 +29,7 @@
 - **end_number**: `int`  
   最初のエンドを 0 としてカウントしたエンド数
 
-- **shot_number**: `int`  
+- **team_shot_number**: `int`  
   Output を送信する前に投球情報を送信したチームの、そのエンドにおけるショット数 (0～7)
   (なお、ミックスダブルスの際は0~4)
 
@@ -93,7 +93,7 @@
 {
   "winner_team": "team0",
   "end_number": 0,
-  "shot_number": 1,
+  "team_shot_number": 1,
   "total_shot_number": 2,
   "next_shot_team": "team1",
   "first_team_remaining_time": 120.0,
