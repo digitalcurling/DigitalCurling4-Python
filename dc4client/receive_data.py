@@ -54,6 +54,9 @@ class ShotInfoSchema(BaseModel):
     translational_velocity: float
     angular_velocity: float
     shot_angle: float
+    actual_translational_velocity: float | None = None
+    actual_angular_velocity: float | None = None
+    actual_shot_angle: float | None = None
 
 
 class PowerPlayEndSchema(BaseModel):
